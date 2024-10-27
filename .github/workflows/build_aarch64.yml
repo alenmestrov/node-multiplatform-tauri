@@ -1,9 +1,10 @@
 name: AArch64 compile and build
+
 on:
   workflow_dispatch:
   push:
     branches:
-      - master  # Explicitly set to master
+      - master
   pull_request:
     types:
       - closed
@@ -13,6 +14,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+      
       - uses: pguyot/arm-runner-action@v2.5.2
         with:
           base_image: https://dietpi.com/downloads/images/DietPi_RPi-ARMv8-Bullseye.img.xz
@@ -59,3 +61,16 @@ jobs:
         with:
           name: Debian Bundle
           path: ${{ github.workspace }}/target/release/bundle/deb/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_arm64.deb
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          tag_name: v${{ env.APP_VERSION }}
+          name: '${{ env.APP_NAME }} v${{ env.APP_VERSION }}'  # Correct input
+          body: 'See the attached Debian bundle for installation.'  # Correct input
+          draft: false
+          prerelease: false
+          files: |
+            ${{ github.workspace }}/target/release/bundle/deb/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_arm64.deb
