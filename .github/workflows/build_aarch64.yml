@@ -28,13 +28,13 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
-      # Install frontend dependencies from the root where package.json is located
-      - name: Install frontend dependencies
+      # Install dependencies
+      - name: Install dependencies
         run: pnpm install
 
       # Build frontend
-      - name: Build frontend
-        run: pnpm run build --prefix ./src
+      - name: Build
+        run: pnpm run build
 
       # Set up Rust toolchain and target for ./src-tauri
       - name: Setup Rust toolchain
