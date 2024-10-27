@@ -28,15 +28,15 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
-      # Install dependencies
-      - name: Install node-ui dependencies with pnpm
+      # Install frontend dependencies from the root where package.json is located
+      - name: Install frontend dependencies
         run: pnpm install
 
-      # Build node-ui
-      - name: Build node-ui
-        run: pnpm --filter ./src run build
+      # Build frontend
+      - name: Build frontend
+        run: pnpm run build --prefix ./src
 
-      # Set up Rust toolchain and target
+      # Set up Rust toolchain and target for ./src-tauri
       - name: Setup Rust toolchain
         run: rustup toolchain install stable --profile minimal
 
@@ -92,7 +92,7 @@ jobs:
           echo "CARGO_ZIGBUILD_ZIG=$PWD/zig-linux-x86_64-0.11.0/zig" >> $GITHUB_ENV
           cargo install cargo-zigbuild
 
-      - name: Build the tauri app
+      - name: Build the Rust app in src-tauri
         env:
           C_INCLUDE_PATH: /usr/lib/gcc-cross/aarch64-linux-gnu/11/include
           CXX_INCLUDE_PATH: /usr/lib/gcc-cross/aarch64-linux-gnu/11/include/c++
@@ -104,13 +104,16 @@ jobs:
           PKG_CONFIG_SYSROOT_DIR: ${{ env.PKG_CONFIG_SYSROOT_DIR }}
           OPENSSL_STATIC: ${{ env.OPENSSL_STATIC }}
           RUSTFLAGS: "-C link-arg=-lstdc++ -C link-arg=-lpthread -C link-arg=-lc"
-        run: cargo zigbuild -p your_crate_name --release --target ${{ matrix.target }}
+        run: |
+          cd src-tauri
+          cargo zigbuild --release --target ${{ matrix.target }}
 
       - name: Get application name and version
         id: get_info
         run: |
-          APP_NAME=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == "your_crate_name") | .name')
-          APP_VERSION=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == "your_crate_name") | .version')
+          cd src-tauri
+          APP_NAME=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == "src-tauri") | .name')
+          APP_VERSION=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == "src-tauri") | .version')
           echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
 
@@ -118,7 +121,7 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Debian Bundle
-          path: target/${{ matrix.target }}/release/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_arm64.deb
+          path: src-tauri/target/${{ matrix.target }}/release/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_arm64.deb
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v1
@@ -131,4 +134,4 @@ jobs:
           draft: false
           prerelease: false
           files: |
-            target/${{ matrix.target }}/release/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_arm64.deb
+            src-tauri/target/${{ matrix.target }}/release/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_arm64.deb
