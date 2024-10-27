@@ -67,7 +67,8 @@ jobs:
           libpango1.0-dev \
           libcairo2-dev \
           libsoup2.4-dev \
-          libjavascriptcoregtk-4.0-dev
+          libjavascriptcoregtk-4.0-dev \
+          libwebkit2gtk-4.0-dev
 
       - name: Download and set up OpenSSL for cross-compilation
         if: matrix.target == 'aarch64-unknown-linux-gnu'
