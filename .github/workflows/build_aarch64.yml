@@ -28,13 +28,13 @@ jobs:
       - name: Install pnpm
         run: npm install -g pnpm
 
-      # Install frontend dependencies
+      # Install dependencies
       - name: Install node-ui dependencies with pnpm
-        run: pnpm install --prefix ./node-ui
+        run: pnpm install
 
       # Build node-ui
       - name: Build node-ui
-        run: pnpm --filter ./node-ui run build
+        run: pnpm --filter ./src run build
 
       # Set up Rust toolchain and target
       - name: Setup Rust toolchain
