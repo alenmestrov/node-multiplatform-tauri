@@ -6,7 +6,7 @@ use crate::{
     types::AppState,
     utils::setup::{disable_auto_launch, setup_auto_launch},
 };
-
+    
 pub fn create_menu() -> Menu {
     // Create the "Run on Startup" menu item with initial state
     let run_on_startup_menu_item = CustomMenuItem::new("run_on_startup", "Run on Startup");
