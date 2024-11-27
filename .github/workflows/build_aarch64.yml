@@ -49,8 +49,9 @@ jobs:
       - name: Get application name and version
         id: get_info
         run: |
-          APP_NAME=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == "your_crate_name") | .name')
-          APP_VERSION=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[] | select(.name == "your_crate_name") | .version')
+          cd src-tauri
+          APP_NAME=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[0].name')
+          APP_VERSION=$(cargo metadata --format-version 1 --no-deps | jq -r '.packages[0].version')
           echo "APP_NAME=$APP_NAME" >> $GITHUB_ENV
           echo "APP_VERSION=$APP_VERSION" >> $GITHUB_ENV
 
@@ -58,4 +59,4 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Debian Bundle
-          path: ${{ github.workspace }}/target/release/bundle/deb/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_arm64.deb
+          path: src-tauri/target/release/bundle/deb/${{ env.APP_NAME }}_${{ env.APP_VERSION }}_arm64.deb
