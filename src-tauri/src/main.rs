@@ -1,11 +1,11 @@
 // Prevents additional console window on Windows in release, DO NOT REMOVE!!
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
-use node_multiplatform_tauri::commands;
-use node_multiplatform_tauri::tray::menu::{create_menu, handle_menu_click};
-use node_multiplatform_tauri::tray::{handle_tray_click, update_tray_menu};
-use node_multiplatform_tauri::types::AppState;
-use node_multiplatform_tauri::utils::setup::{
+use calimero_node_manager::commands;
+use calimero_node_manager::tray::menu::{create_menu, handle_menu_click};
+use calimero_node_manager::tray::{handle_tray_click, update_tray_menu};
+use calimero_node_manager::types::AppState;
+use calimero_node_manager::utils::setup::{
     run_nodes_on_startup, setup_app_state, setup_auto_launch, setup_store,
 };
 use tauri::{Manager, SystemTray, SystemTrayEvent, SystemTrayMenu, WindowEvent};
