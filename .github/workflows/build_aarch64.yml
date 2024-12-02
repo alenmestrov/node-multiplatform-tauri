@@ -20,6 +20,9 @@ jobs:
           bind_mount_repository: true
           image_additional_mb: 10240
           optimize_image: false
+          copy_artifact_path: |
+            src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/deb
+            src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/rpm
           commands: |
             # Rust complains (rightly) that $HOME doesn't match eid home
             export HOME=/root
@@ -67,3 +70,9 @@ jobs:
         with:
           name: RPM Bundle
           path: /node-multiplatform-tauri/src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/rpm/${{ env.APP_NAME }}-${{ env.APP_VERSION }}-1.aarch64.rpm
+
+      # Debug: Check if files exist and where
+      - name: Debug file location
+        run: |
+          ls -la /node-multiplatform-tauri/src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/deb/
+          ls -la /node-multiplatform-tauri/src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/rpm/
