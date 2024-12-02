@@ -21,6 +21,13 @@ jobs:
           image_additional_mb: 10240
           optimize_image: false
           commands: |
+            # Add these debug commands before the build
+            echo "=== Debug Package Name ==="
+            cd src-tauri
+            cat Cargo.toml | grep "name ="
+            cargo metadata --format-version 1 --no-deps | jq -r '.packages[0].name'
+            find . -name "Cargo.toml" -exec echo {} \; -exec cat {} \;
+            cd ..
             # Rust complains (rightly) that $HOME doesn't match eid home
             export HOME=/root
             # Workaround to CI worker being stuck on Updating crates.io index
