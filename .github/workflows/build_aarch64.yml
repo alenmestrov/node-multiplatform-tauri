@@ -64,10 +64,10 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Debian Bundle
-          path: ${{ github.workspace }}/src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/deb/calimero-node-manager_0.1.0_arm64.deb
+          path: target/release/bundle/deb/calimero-node-manager_0.1.0_arm64.deb
 
       - name: Upload rpm bundle
         uses: actions/upload-artifact@v3
         with:
           name: RPM Bundle
-          path: ${{ github.workspace }}/src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/rpm/calimero-node-manager-0.1.0-1.aarch64.rpm
+          path: target/release/bundle/rpm/calimero-node-manager-0.1.0-1.aarch64.rpm
