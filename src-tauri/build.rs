@@ -9,6 +9,7 @@ use std::io::BufReader;
 use std::io::Read;
 use std::path::Path;
 use tar::Archive;
+use eyre::anyhow;
 
 fn main() {
     tauri::async_runtime::block_on(setup_binary()).unwrap();
@@ -17,14 +18,20 @@ fn main() {
 
 async fn setup_binary() -> Result<()> {
     let (os, arch, target) = determine_bin_data();
-    let binary_name = "meroctl";
+    let binary_name = "merod";
     let cache_dir = std::env::temp_dir().join(binary_name);
     std::fs::create_dir_all(&cache_dir).expect("Failed to create cache directory");
 
+    // Get the latest merod release tag
+    let latest_release = get_latest_merod_release().await?;
+    
     let url = format!(
-        "https://github.com/calimero-network/core/releases/latest/download/{}.tar.gz",
+        "https://github.com/calimero-network/core/releases/download/{}/{}.tar.gz",
+        latest_release,
         target
     );
+    println!("Downloading from URL: {}", url);
+
     let cache_bin_path = cache_dir.join(format!("{}.tar.gz", binary_name));
     let bin_dir = std::env::current_dir()?.join("bin").join(os).join(arch);
     let resource_path = bin_dir.join(binary_name);
@@ -62,4 +69,34 @@ async fn download_and_extract(url: &str, cache_bin_path: &Path, bin_dir: &Path) 
     archive.unpack(bin_dir).expect("Failed to unpack archive");
 
     Ok(())
+}
+
+async fn get_latest_merod_release() -> Result<String> {
+    let client = reqwest::Client::new();
+    let response = client
+        .get("https://api.github.com/repos/calimero-network/core/releases")
+        .header("User-Agent", "request")
+        .send()
+        .await?;
+
+    if !response.status().is_success() {
+        bail!("Failed to fetch releases: {}", response.status());
+    }
+
+    let releases: Vec<serde_json::Value> = response.json().await?;
+    
+    // Find the latest release that starts with "merod"
+    let latest_merod = releases.iter()
+        .find(|release| {
+            release["tag_name"]
+                .as_str()
+                .map_or(false, |tag| tag.starts_with("merod"))
+        })
+        .ok_or_else(|| anyhow!("No merod release found"))?;
+
+    let tag_name = latest_merod["tag_name"]
+        .as_str()
+        .ok_or_else(|| anyhow!("Invalid tag name"))?;
+
+    Ok(tag_name.to_string())
 }
