@@ -48,22 +48,8 @@ jobs:
             
             # Debug: Print current directory and list files
             pwd
-            echo "=== Listing current directory ==="
-            ls -la
-            
-            echo "=== Listing src-tauri directory ==="
-            ls -la src-tauri/
-            
-            echo "=== Listing target directory ==="
-            ls -la src-tauri/target/
-            
-            echo "=== Trying to copy files ==="
-            mkdir -p artifacts/deb artifacts/rpm
+            echo "=== Listing build artifacts ==="
             find . -name "*.deb" -o -name "*.rpm"
-            
-            # Try to copy using find results
-            find . -name "*.deb" -exec cp {} artifacts/deb/ \;
-            find . -name "*.rpm" -exec cp {} artifacts/rpm/ \;
 
       - name: Get application name and version
         id: get_info
@@ -78,16 +64,10 @@ jobs:
         uses: actions/upload-artifact@v3
         with:
           name: Debian Bundle
-          path: artifacts/deb/*.deb
+          path: ${{ github.workspace }}/src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/deb/calimero-node-manager_0.1.0_arm64.deb
 
       - name: Upload rpm bundle
         uses: actions/upload-artifact@v3
         with:
           name: RPM Bundle
-          path: artifacts/rpm/*.rpm
-
-      # Debug: Check if files exist and where
-      - name: Debug file location
-        run: |
-          ls -la /node-multiplatform-tauri/src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/deb/
-          ls -la /node-multiplatform-tauri/src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/rpm/
+          path: ${{ github.workspace }}/src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/rpm/calimero-node-manager-0.1.0-1.aarch64.rpm
