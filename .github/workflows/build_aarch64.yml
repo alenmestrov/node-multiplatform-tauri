@@ -46,11 +46,24 @@ jobs:
             # Build the application
             cargo tauri build --target aarch64-unknown-linux-gnu --bundles deb,rpm
             
-            # Copy artifacts to a temporary directory
-            mkdir -p /mnt/host/artifacts/deb
-            mkdir -p /mnt/host/artifacts/rpm
-            cp src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/deb/*.deb /mnt/host/artifacts/deb/
-            cp src-tauri/target/aarch64-unknown-linux-gnu/release/bundle/rpm/*.rpm /mnt/host/artifacts/rpm/
+            # Debug: Print current directory and list files
+            pwd
+            echo "=== Listing current directory ==="
+            ls -la
+            
+            echo "=== Listing src-tauri directory ==="
+            ls -la src-tauri/
+            
+            echo "=== Listing target directory ==="
+            ls -la src-tauri/target/
+            
+            echo "=== Trying to copy files ==="
+            mkdir -p artifacts/deb artifacts/rpm
+            find . -name "*.deb" -o -name "*.rpm"
+            
+            # Try to copy using find results
+            find . -name "*.deb" -exec cp {} artifacts/deb/ \;
+            find . -name "*.rpm" -exec cp {} artifacts/rpm/ \;
 
       - name: Get application name and version
         id: get_info
