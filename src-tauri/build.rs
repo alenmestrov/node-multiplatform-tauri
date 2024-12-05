@@ -10,6 +10,7 @@ use std::io::Read;
 use std::path::Path;
 use tar::Archive;
 use eyre::anyhow;
+use std::time::Duration;
 
 fn main() {
     tauri::async_runtime::block_on(setup_binary()).unwrap();
@@ -72,41 +73,60 @@ async fn download_and_extract(url: &str, cache_bin_path: &Path, bin_dir: &Path) 
 }
 
 async fn get_latest_merod_release() -> Result<String> {
-    // First try without authentication
     let client = reqwest::Client::new();
-    let response = client
-        .get("https://api.github.com/repos/calimero-network/core/releases/latest")  // Use /latest instead of fetching all
-        .header("User-Agent", "request")
-        .send()
-        .await?;
-
-    if !response.status().is_success() {
-        // If that fails, try with authentication
-        let github_token = std::env::var("GITHUB_TOKEN")
-            .unwrap_or_else(|_| "".to_string());
-
-        let response = client
-            .get("https://api.github.com/repos/calimero-network/core/releases/latest")
-            .header("User-Agent", "request")
-            .header("Authorization", format!("Bearer {}", github_token))
-            .send()
-            .await?;
-
-        if !response.status().is_success() {
-            // If both methods fail, try a direct approach
-            return Ok("merod-0.2.0".to_string());  // Fallback to known working version
+    let github_token = std::env::var("GITHUB_TOKEN").ok();
+    
+    // Maximum number of retries
+    let max_retries = 3;
+    let mut retry_count = 0;
+    
+    loop {
+        let mut request = client
+            .get("https://api.github.com/repos/calimero-network/core/releases")
+            .header("User-Agent", "calimero-node-manager-build");
+        
+        if let Some(token) = &github_token {
+            println!("Using GitHub token for authentication (attempt {})", retry_count + 1);
+            request = request.header("Authorization", format!("token {}", token));
+        }
+        
+        let response = request.send().await?;
+        println!("GitHub API Response Status: {} (attempt {})", response.status(), retry_count + 1);
+        
+        match response.status() {
+            status if status.is_success() => {
+                let releases: Vec<serde_json::Value> = response.json().await?;
+                println!("Found {} releases", releases.len());
+                
+                if let Some(latest_merod) = releases.iter().find(|release| {
+                    release["tag_name"]
+                        .as_str()
+                        .map_or(false, |tag| tag.starts_with("merod"))
+                }) {
+                    if let Some(tag_name) = latest_merod["tag_name"].as_str() {
+                        println!("Selected release: {}", tag_name);
+                        return Ok(tag_name.to_string());
+                    }
+                }
+                bail!("No merod release found in the response");
+            },
+            status if status.as_u16() == 403 => {
+                if retry_count >= max_retries {
+                    let error_text = response.text().await?;
+                    bail!("GitHub API rate limit exceeded after {} retries: {}", max_retries, error_text);
+                }
+                
+                // Exponential backoff: wait longer between each retry
+                let wait_time = Duration::from_secs(2u64.pow(retry_count as u32));
+                println!("Rate limit hit, waiting {:?} before retry...", wait_time);
+                tokio::time::sleep(wait_time).await;
+                retry_count += 1;
+                continue;
+            },
+            status => {
+                let error_text = response.text().await?;
+                bail!("GitHub API error: {} - {}", status, error_text);
+            }
         }
     }
-
-    let release: serde_json::Value = response.json().await?;
-    let tag_name = release["tag_name"]
-        .as_str()
-        .ok_or_else(|| anyhow!("Invalid tag name"))?;
-
-    if !tag_name.starts_with("merod") {
-        // If the latest release isn't a merod release, fall back to known version
-        return Ok("merod-0.2.0".to_string());
-    }
-
-    Ok(tag_name.to_string())
 }
